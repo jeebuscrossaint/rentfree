@@ -1,0 +1,93 @@
+# rentfree config -- copy to ~/.config/rentfree/config
+#
+# The daemon watches this file, so saving it re-applies everything live.
+# Every value below is the default; delete what you don't want to change.
+#
+# Keys at the top level are GLOBAL: they apply to every note, wherever you
+# write them in the file. Keys after a [note ...] header belong to that note
+# and override the global value.
+#
+# With no [note ...] sections at all you get exactly one note, backed by
+# `rentfree path`, and you never need the -n flag.
+
+# ======================================================================
+# global defaults
+# ======================================================================
+
+# --- where a note sits -------------------------------------------------
+# top-left, top, top-right, left, center, right, bottom-left, bottom, bottom-right
+anchor = top-right
+
+# background = under everything, even the wallpaper on some setups
+# bottom     = above the wallpaper, below every window   <- the point of rentfree
+# top        = above windows, below fullscreen/lockscreen
+# overlay    = above everything (handy for debugging)
+layer = bottom
+
+margin = 24
+# margin_top / margin_right / margin_bottom / margin_left override the above
+
+# Connector name, e.g. DP-1 or eDP-1. Empty lets the compositor choose.
+# `wayland-info | grep -A2 wl_output` will tell you the names.
+output =
+
+# true  = stay clear of panels and bars
+# false = ignore their reserved space entirely
+respect_bars = true
+
+# --- the box -----------------------------------------------------------
+max_width = 420
+padding = 18
+corner_radius = 12
+
+# --- text --------------------------------------------------------------
+font = Sans 12
+# An optional heading pinned above the list. Empty = no heading.
+title =
+bullet = ▪
+check = ✓
+line_spacing = 1.35
+
+# --- colours (#RGB, #RGBA, #RRGGBB or #RRGGBBAA) ------------------------
+bg = #00000073
+fg = #f0f0f5
+done_fg = #8c919e
+accent = #73b8ff
+
+# --- behaviour ---------------------------------------------------------
+show_done = true
+strike_done = true
+hide_when_empty = true
+# 0 = show everything; otherwise cap the rows and append an ellipsis
+max_items = 0
+
+# ======================================================================
+# notes
+# ======================================================================
+#
+# Uncomment to run several notes at once. Each section ADDS a note -- the
+# default note (the one `rentfree path` points at) always stays, and remains
+# what bare `rentfree add ...` writes to. `rentfree -n <name>` addresses the
+# others.
+#
+# To take the default over rather than adding alongside it, either name a
+# section `default`, or point a section's `file =` at the default file.
+#
+# `file =` is relative to the directory of `rentfree path`, or absolute.
+# Omit it and the note uses <name>.md.
+
+# [note todo]
+# anchor = top-right
+# title  = today
+#
+# [note groceries]
+# file      = shopping.md
+# anchor    = bottom-left
+# max_width = 260
+# accent    = #9ae6a0
+#
+# [note ideas]
+# anchor      = bottom-right
+# title       = rent free
+# max_items   = 8
+# strike_done = false

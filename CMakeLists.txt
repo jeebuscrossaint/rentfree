@@ -47,6 +47,7 @@ list(APPEND ALL_PROTO ${PROTO_SOURCES})
 add_executable(rentfree
   src/main.cpp
   src/config.cpp
+  src/confedit.cpp
   src/store.cpp
   src/paths.cpp
   src/ipc.cpp
@@ -61,3 +62,13 @@ target_compile_options(rentfree PRIVATE -Wall -Wextra -Wno-unused-parameter)
 
 include(GNUInstallDirs)
 install(TARGETS rentfree RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+# Shell completions. Each script asks the binary what exists rather than
+# hardcoding it, so they don't need regenerating when settings are added.
+install(FILES contrib/completions/rentfree.bash
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/bash-completion/completions
+        RENAME rentfree)
+install(FILES contrib/completions/_rentfree
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/zsh/site-functions)
+install(FILES contrib/completions/rentfree.fish
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/fish/vendor_completions.d)

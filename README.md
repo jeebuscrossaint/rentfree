@@ -109,6 +109,61 @@ acts on every note as a single switch — if anything is showing it hides them
 all, otherwise it shows them all — so you never end up in a half-hidden state.
 `rentfree -n groceries toggle` flips just that one.
 
+## Everything from the command line
+
+Every setting is reachable three ways, and they all validate identically:
+
+```sh
+rentfree keys                      # every setting, with its type and default
+rentfree get anchor                # what's in effect right now
+rentfree set anchor center         # write it to the config -- it sticks
+rentfree unset anchor              # back to the default
+rentfree --anchor center           # just this run, nothing written
+```
+
+`set` edits the config file surgically rather than regenerating it, so your
+comments and layout survive. If a setting exists in the file only as a
+commented-out placeholder, it gets filled in where it already sits.
+
+`--<key> <value>` works for every setting and lands on top of the config file,
+so you can try something without committing to it:
+
+```sh
+rentfree --anchor center --font "Iosevka 14" --no-strike-done
+rentfree --max-width=700 --layer overlay      # --key=value and dashes both fine
+```
+
+Booleans take a bare flag (`--show-done`), a negation (`--no-show-done`) or an
+explicit value (`--show-done false`).
+
+Wrong values explain themselves rather than being ignored:
+
+```
+$ rentfree set anchor middle
+rentfree: 'middle' is not a valid anchor; expected one of top-left, top,
+  top-right, left, center, right, bottom-left, bottom, bottom-right
+  anchor expects top-left|top|top-right|left|center|right|bottom-left|bottom|bottom-right
+
+$ rentfree get ancor
+rentfree: no setting called 'ancor'
+  did you mean: anchor
+```
+
+### Completions
+
+Scripts for bash, zsh and fish live in
+[`contrib/completions/`](contrib/completions) and are installed by
+`cmake --install`. They ask the binary what exists (`rentfree --complete-keys`
+and friends) instead of hardcoding anything, so they stay correct as settings
+are added — and they complete things a static script couldn't:
+
+- `rentfree set output <TAB>` lists the connectors your compositor is actually
+  offering, by asking the running daemon
+- `rentfree done <TAB>` lists your tasks by number *with their text*, and
+  follows `-n`, so `rentfree -n groceries done <TAB>` shows that note's items
+- `rentfree set <TAB>` lists settings with their one-line descriptions, and the
+  next word completes that setting's legal values
+
 ## Configuration
 
 The config lives at **`~/.config/rentfree/config`** (strictly

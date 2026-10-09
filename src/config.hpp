@@ -9,18 +9,20 @@ struct Color {
 
 // Parses #RGB, #RGBA, #RRGGBB, #RRGGBBAA (leading '#' optional).
 bool parse_color(const std::string &s, Color &out);
+// "#rrggbb", or "#rrggbbaa" when the colour isn't opaque.
+std::string format_color(const Color &c);
 
 // Everything about how one note looks and where it sits. Global keys in the
 // config seed this; each [note] section may override any of it.
 struct Style {
   // --- placement ---
-  std::string anchor = "top-right"; // top|bottom|left|right|center|top-left|...
+  std::string anchor = "top-right";
   int32_t margin_top = 24;
   int32_t margin_right = 24;
   int32_t margin_bottom = 24;
   int32_t margin_left = 24;
-  std::string layer = "bottom";  // background|bottom|top|overlay
-  std::string output;            // empty == let the compositor choose
+  std::string layer = "bottom";
+  std::string output;
 
   // --- box ---
   int32_t max_width = 420;
@@ -45,32 +47,75 @@ struct Style {
   bool strike_done = true;
   bool hide_when_empty = true;
   bool respect_bars = true;
-  int32_t max_items = 0; // 0 == unlimited
+  int32_t max_items = 0;
 };
+
+// ---------------------------------------------------------------------------
+// the option registry
+//
+// One table describes every setting: how to parse it, how to print it, what it
+// means and what values are legal. The config parser, `rentfree set/get`, the
+// --key command-line overrides, the effective-config dump and the shell
+// completions all read from here, so adding a setting in one place teaches all
+// of them about it at once.
+// ---------------------------------------------------------------------------
+
+enum class OptType { Str, Int, Real, Bool, Color, Enum };
+
+struct Option {
+  const char *name;
+  OptType type;
+  const char *doc;
+  std::vector<const char *> choices; // Enum only; also drives completion
+  // Canonical string form of the current value.
+  std::string (*get)(const Style &);
+  // Parses `value` into the style, or explains what went wrong.
+  bool (*set)(Style &, const std::string &value, std::string &err);
+  // True for shorthands like `margin`, which write several real settings.
+  // Skipped when dumping so the dump stays a faithful round-trip.
+  bool shorthand;
+};
+
+const std::vector<Option> &options();
+
+// Accepts dashes for underscores, so --max-width and max_width both work.
+const Option *find_option(const std::string &name);
+
+// Names close to `name`, for "did you mean" on a typo.
+std::vector<std::string> suggest_options(const std::string &name);
+
+// Human-readable value hint: "an integer", "top-left|top|...", "#rrggbb[aa]".
+std::string option_hint(const Option &opt);
+
+// ---------------------------------------------------------------------------
 
 // One note: a name, the file behind it, and how to draw it.
 struct NoteSpec {
   std::string name = "default";
-  std::string file; // absolute path
+  std::string file;
   Style style;
 };
 
 struct Settings {
   std::vector<NoteSpec> notes; // never empty
-  std::string error;           // non-fatal complaints about the config file
+  std::string error;
 };
 
-// Reads the config. A file with no [note] sections (or no file at all) yields
-// exactly one note called "default" backed by `default_file` -- i.e. the
-// single-note behaviour, with zero configuration required.
+// A --key=value given on the command line, applied after everything in the
+// config file so the most explicit thing wins.
+struct Override {
+  std::string key;
+  std::string value;
+};
+
+// Reads the config. A file with no [note] sections still yields the "default"
+// note backed by `default_file`; declaring sections adds notes rather than
+// replacing it.
 //
 // Relative `file =` paths resolve against the directory of `default_file`.
-Settings load_settings(const std::string &path, const std::string &default_file);
+Settings load_settings(const std::string &path, const std::string &default_file,
+                       const std::vector<Override> &overrides = {});
 
-// "#rrggbb", or "#rrggbbaa" when the colour isn't opaque.
-std::string format_color(const Color &c);
-
-// The fully resolved configuration, in the same syntax the config file uses --
-// globals are already merged into each note, so what you see is what is being
-// drawn. Paste-able straight back into a config file.
+// The fully resolved configuration in config-file syntax -- globals already
+// merged into each note, so what you see is what is being drawn. Round-trips.
 std::string describe_settings(const Settings &settings, const std::string &path);

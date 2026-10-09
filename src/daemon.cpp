@@ -552,7 +552,8 @@ void watch_config(App &app) {
 // Re-reads the config and rebuilds the notes if the effective settings actually
 // changed. Returns true if it rebuilt. `force` rebuilds regardless.
 bool apply_settings(App &app, bool force) {
-  Settings fresh = load_settings(app.opts.config_path, app.opts.todo_path);
+  Settings fresh =
+      load_settings(app.opts.config_path, app.opts.todo_path, app.opts.overrides);
   // Comparing the serialisation means every field is covered automatically,
   // including ones added later.
   std::string fp = describe_settings(fresh, app.opts.config_path);
@@ -600,6 +601,14 @@ std::string handle_command(App &app, const std::string &cmd) {
     apply_settings(app, true);
     return app.settings.error.empty() ? "ok"
                                       : "ok, with config warnings:\n" + app.settings.error;
+  }
+
+  if (verb == "outputs") {
+    std::string out;
+    for (Output *o : app.outputs)
+      if (!o->name.empty()) out += o->name + "\n";
+    if (!out.empty()) out.pop_back();
+    return out;
   }
 
   if (verb == "notes") {
@@ -706,7 +715,7 @@ namespace note {
 int run(const Options &opts) {
   App app;
   app.opts = opts;
-  app.settings = load_settings(opts.config_path, opts.todo_path);
+  app.settings = load_settings(opts.config_path, opts.todo_path, opts.overrides);
 
   if (!app.settings.error.empty())
     fprintf(stderr, "rentfree: %s: warnings:\n%s", opts.config_path.c_str(),

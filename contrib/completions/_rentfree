@@ -1,0 +1,65 @@
+#compdef rentfree
+#
+# zsh completion for rentfree. Candidates and their descriptions both come from
+# `rentfree --complete-*`, so adding a setting needs no change here.
+
+_rentfree_pairs() {
+    # Turns "value<TAB>description" lines into zsh's value:description form.
+    local -a out
+    local line
+    while IFS= read -r line; do
+        out+=("${line%%$'\t'*}:${line#*$'\t'}")
+    done
+    _describe -t "$1" "$2" out
+}
+
+_rentfree() {
+    local context state line
+    typeset -A opt_args
+
+    # The word after set/get/unset is a setting; the next is its value.
+    local i verb= key=
+    for (( i = 2; i < CURRENT; i++ )); do
+        case ${words[i]} in
+            set|get|unset) verb=${words[i]}; key=${words[i+1]}; break ;;
+        esac
+    done
+    if [[ -n $verb ]]; then
+        if (( CURRENT == i + 1 )); then
+            rentfree --complete-keys 2>/dev/null | _rentfree_pairs settings setting
+        elif (( CURRENT == i + 2 )) && [[ -n $key ]]; then
+            local -a vals
+            vals=(${(f)"$(rentfree --complete-values $key 2>/dev/null)"})
+            _describe -t values "$key" vals
+        fi
+        return
+    fi
+
+    for (( i = 2; i < CURRENT; i++ )); do
+        case ${words[i]} in
+            done|undone|rm)
+                rentfree --complete-tasks 2>/dev/null | _rentfree_pairs tasks task
+                return ;;
+            config)
+                _values 'config action' 'path[print the config file path]' \
+                                        'edit[open the config in $EDITOR]'
+                return ;;
+        esac
+    done
+
+    _arguments -C \
+        '(-n --note)'{-n,--note}'[note to act on]:note:->notes' \
+        '(-f --foreground)'{-f,--foreground}'[run the daemon in the foreground]' \
+        '--file[todo file to use]:file:_files' \
+        '--config[config file to use]:file:_files' \
+        '(-h --help)'{-h,--help}'[show help]' \
+        '(-v --version)'{-v,--version}'[show the version]' \
+        '*::command:->command'
+
+    case $state in
+        notes) rentfree --complete-notes 2>/dev/null | _rentfree_pairs notes note ;;
+        command) rentfree --complete-commands 2>/dev/null | _rentfree_pairs commands command ;;
+    esac
+}
+
+_rentfree "$@"

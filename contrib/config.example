@@ -1,5 +1,9 @@
 # rentfree config -- copy to ~/.config/rentfree/config
 #
+# You never have to write this by hand: `rentfree set <key> <value>` edits it
+# for you (preserving your comments), `rentfree keys` lists every setting with
+# its type and default, and `rentfree config` prints the effective values.
+#
 # The daemon watches this file, so saving it re-applies everything live.
 # Every value below is the default; delete what you don't want to change.
 #
